@@ -8,10 +8,6 @@
 #include "esp_log.h"
 
 #include "ssd1306.h"
-#include "font8x8_basic.h"
-
-
-#include "ssd1306.h"
 
 #define tag "SSD1306"
 
@@ -61,10 +57,10 @@ void sht3x_read_data(float *temperature, float *humidity) {
     i2c_cmd_link_delete(cmd);
 
     // Convert raw data to temperature and humidity
-    int16_t raw_temperature = (data[0] << 8) | data[1];
-    int16_t raw_humidity = (data[3] << 8) | data[4];
+    int32_t raw_temperature = (data[0] << 8) | data[1];
+    int32_t raw_humidity = (data[3] << 8) | data[4];
 
-    *temperature = -45.0 + 175.0 * (float)raw_temperature / 65535.0;
+    *temperature = -45.0 + 175.0 * (float)raw_temperature / 65535.0; // doc page 13
     *humidity = 100.0 * (float)raw_humidity / 65535.0;
 }
 
@@ -95,14 +91,25 @@ void app_main() {
         float temperature, humidity;
         sht3x_read_data(&temperature, &humidity);
 
-        printf("Teplota: %.2f °C, Vlhkost: %.2f %%\n", temperature, humidity);
-        char temperatureString[20]; // Adjust the size based on your needs
+        
+        char temperatureString[16]; // Adjust the size based on your needs
+        char humidityString[16]; // Adjust the size based on your needs
+
 
         // Convert float to string with two decimal places
         sprintf(temperatureString, "%.2f", temperature);
 
-        ssd1306_display_text_x3(&dev, 0, temperatureString, 5, false);
+        sprintf(humidityString, "%.2f", humidity);
 
-        vTaskDelay(5000 / portTICK_PERIOD_MS); // Pause for 1 second
+        printf(temperatureString);
+        printf(" : ");
+        printf(humidityString);
+        printf("\n");
+
+        ssd1306_display_text_x3(&dev, 0, temperatureString, 16, false);
+        ssd1306_display_text_x3(&dev, 5, humidityString, 16, false);
+
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
     }
 }
