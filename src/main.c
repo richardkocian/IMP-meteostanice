@@ -3,14 +3,26 @@
 #include "freertos/task.h"
 #include "driver/i2c.h"
 
-#define I2C_MASTER_SCL_IO 16
-#define I2C_MASTER_SDA_IO 17
-#define I2C_MASTER_NUM I2C_NUM_0
+#include <stdlib.h>
+#include <string.h>
+#include "esp_log.h"
+
+#include "ssd1306.h"
+#include "font8x8_basic.h"
+
+
+#include "ssd1306.h"
+
+#define tag "SSD1306"
+
+#define I2C_MASTER_SCL_IO 25
+#define I2C_MASTER_SDA_IO 26
+#define I2C_MASTER_NUM I2C_NUM_1
 #define I2C_MASTER_FREQ_HZ 100000
 
 #define SHT3X_I2C_ADDRESS 0x44
 
-void i2c_master_init() {
+void sh31_i2c_master_init() {
     i2c_config_t i2c_config = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA_IO,
@@ -56,15 +68,41 @@ void sht3x_read_data(float *temperature, float *humidity) {
     *humidity = 100.0 * (float)raw_humidity / 65535.0;
 }
 
+
+
+
 void app_main() {
-    i2c_master_init();
+    sh31_i2c_master_init();
+
+    SSD1306_t dev;
+
+	ESP_LOGI(tag, "INTERFACE is i2c");
+	ESP_LOGI(tag, "CONFIG_SDA_GPIO=%d",CONFIG_SDA_GPIO);
+	ESP_LOGI(tag, "CONFIG_SCL_GPIO=%d",CONFIG_SCL_GPIO);
+	ESP_LOGI(tag, "CONFIG_RESET_GPIO=%d",CONFIG_RESET_GPIO);
+	i2c_master_init(&dev, CONFIG_SDA_GPIO, CONFIG_SCL_GPIO, CONFIG_RESET_GPIO);
+
+	ESP_LOGI(tag, "Panel is 128x64");
+
+	ssd1306_init(&dev, 128, 64);
+
+	ssd1306_clear_screen(&dev, false);
+	ssd1306_contrast(&dev, 0xff);
+	//ssd1306_display_text_x3(&dev, 0, "Hello", 5, false);
+	//vTaskDelay(3000 / portTICK_PERIOD_MS);
 
     while (1) {
         float temperature, humidity;
         sht3x_read_data(&temperature, &humidity);
 
         printf("Teplota: %.2f °C, Vlhkost: %.2f %%\n", temperature, humidity);
+        char temperatureString[20]; // Adjust the size based on your needs
 
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
+        // Convert float to string with two decimal places
+        sprintf(temperatureString, "%.2f", temperature);
+
+        ssd1306_display_text_x3(&dev, 0, temperatureString, 5, false);
+
+        vTaskDelay(5000 / portTICK_PERIOD_MS); // Pause for 1 second
     }
 }
