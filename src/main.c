@@ -25,7 +25,7 @@
 #define SHT31_I2C I2C_NUM_1
 #define SHT31_I2C_FREQ 100000 // = 100 MHz
 
-#define SHT3X_I2C_ADDRESS 0x44
+#define SHT31_I2C_ADDRESS 0x44
 
 
 
@@ -49,7 +49,7 @@ void sht3x_read_data(float *temperature, float *humidity) {
     // send command to the sht31, that will invoke measuremant
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (SHT3X_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
+    i2c_master_write_byte(cmd, (SHT31_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
     i2c_master_write(cmd, command, sizeof(command), true);
     i2c_master_stop(cmd);
     i2c_master_cmd_begin(SHT31_I2C, cmd, 1000 / portTICK_PERIOD_MS);
@@ -61,7 +61,7 @@ void sht3x_read_data(float *temperature, float *humidity) {
     uint8_t data[6];
     cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (SHT3X_I2C_ADDRESS << 1) | I2C_MASTER_READ, true);
+    i2c_master_write_byte(cmd, (SHT31_I2C_ADDRESS << 1) | I2C_MASTER_READ, true);
     i2c_master_read(cmd, data, sizeof(data), I2C_MASTER_ACK);
     i2c_master_stop(cmd);
     i2c_master_cmd_begin(SHT31_I2C, cmd, 1000 / portTICK_PERIOD_MS);
@@ -122,14 +122,14 @@ void app_main() {
                 vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
             }
         } else {
-            ssd1306_bitmaps(&dev, 0, 0, thermometer, 128, 64, true);
             for (int i = 0; i < 6; i++) {
                 sht3x_read_data(&temperature, &humidity);
 
-                char temperatureString[20] = {0,};
+                char temperatureString[10] = {0,};
 
                 sprintf(temperatureString, "%.2f C", temperature);
 
+                ssd1306_bitmaps(&dev, 0, 0, thermometer, 128, 64, true);
                 ssd1306_display_text(&dev, 3, temperatureString, 10, false);
                 
                 vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
