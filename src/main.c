@@ -84,8 +84,8 @@ void app_main() {
             for (int i = 0; i < 6; i++) {
                 sht3x_read_data(&temperature, &humidity);
 
-                char temperatureString[16]; // Adjust the size based on your needs
-                char humidityString[16];    // Adjust the size based on your needs
+                char temperatureString[16];
+                char humidityString[16];
 
                 // Convert float to string with two decimal places
                 sprintf(temperatureString, "%.2f", temperature);
@@ -98,14 +98,15 @@ void app_main() {
                 printf("\n");
 
                 ssd1306_display_text_x3(&dev, 3, temperatureString, 16, false);
-                vTaskDelay(500 / portTICK_PERIOD_MS); // Pause for 1 second
+
+                vTaskDelay(500 / portTICK_PERIOD_MS); // Pause for 0.5 second
             }
         } else {
             for (int i = 0; i < 6; i++) {
                 sht3x_read_data(&temperature, &humidity);
 
-                char temperatureString[16]; // Adjust the size based on your needs
-                char humidityString[16];    // Adjust the size based on your needs
+                char temperatureString[16];
+                char humidityString[16];
 
                 // Convert float to string with two decimal places
                 sprintf(temperatureString, "%.2f", temperature);
@@ -117,7 +118,7 @@ void app_main() {
                 printf(humidityString);
                 printf("\n");
                 ssd1306_display_text_x3(&dev, 3, humidityString, 16, false);
-                vTaskDelay(500 / portTICK_PERIOD_MS); // Pause for 1 second
+                vTaskDelay(500 / portTICK_PERIOD_MS); // Pause for 0.5 second
             }
         }
 
