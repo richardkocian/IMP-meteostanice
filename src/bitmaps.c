@@ -1,3 +1,12 @@
+/**
+ * @file    bitmaps.c
+ * @author  Richard Kocián (xkocia19)
+ *
+ * @brief   Bitmaps for ESP32 weather station
+ * @date    2023-12-13
+ *
+ */
+
 #include "bitmaps.h"
 
 // Generated via: https://www.mischianti.org/2021/07/14/ssd1306-oled-display-draw-images-splash-and-animations-2/

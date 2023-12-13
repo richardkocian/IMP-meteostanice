@@ -1,3 +1,12 @@
+/**
+ * @file    main.c
+ * @author  Richard Kocián (xkocia19)
+ *
+ * @brief   IMP project (weather station ESP32)
+ * @date    2023-12-13
+ *
+ */
+
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -35,27 +44,26 @@ void sh31_i2c_master_init() {
 }
 
 void sht3x_read_data(float *temperature, float *humidity) {
-    uint8_t command[] = {0x2C, 0x06}; // page 10 high repeatability measurement
+    uint8_t command[] = {0x2C, 0x06}; // high repeatability measurement (https://www.laskakit.cz/user/related_files/sht3x.pdf - page 11)
 
+    // send command to the sht31, that will invoke measuremant
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (SHT3X_I2C_ADDRESS << 1) | I2C_MASTER_WRITE, true);
     i2c_master_write(cmd, command, sizeof(command), true);
     i2c_master_stop(cmd);
-
     i2c_master_cmd_begin(SHT31_I2C, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
     vTaskDelay(20 / portTICK_PERIOD_MS); // Wait for measurement to complete
 
-    // Read 6 bytes of data (temperature and humidity)
+    // Read data from the sht31
     uint8_t data[6];
     cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (SHT3X_I2C_ADDRESS << 1) | I2C_MASTER_READ, true);
     i2c_master_read(cmd, data, sizeof(data), I2C_MASTER_ACK);
     i2c_master_stop(cmd);
-
     i2c_master_cmd_begin(SHT31_I2C, cmd, 1000 / portTICK_PERIOD_MS);
     i2c_cmd_link_delete(cmd);
 
@@ -63,7 +71,8 @@ void sht3x_read_data(float *temperature, float *humidity) {
     int32_t raw_temperature = (data[0] << 8) | data[1];
     int32_t raw_humidity = (data[3] << 8) | data[4];
 
-    *temperature = -45.0 + 175.0 * (float) raw_temperature / 65535.0; // doc page 13
+    // Callculate real data (https://www.laskakit.cz/user/related_files/sht3x.pdf - page 13)
+    *temperature = -45.0 + 175.0 * (float) raw_temperature / 65535.0;
     *humidity = 100.0 * (float) raw_humidity / 65535.0;
 }
 
@@ -92,6 +101,7 @@ void app_main() {
 
                 sprintf(humidityString, "%.2f%% humidity", humidity);
 
+                // Do not update progress bar if there is no change
                 if ((int) humidity == (int) oldHumidity && i != 0) {
                     ssd1306_display_text(&dev, 0, humidityString, 20, false);
                     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -101,6 +111,8 @@ void app_main() {
                 ssd1306_bitmaps(&dev, 0, 0, rectangle, 128, 64, true);
                 ssd1306_display_text(&dev, 0, humidityString, 20, false);
                 int offset = 14;
+
+                // Fill progress bar depending on the humidity percentage
                 for (int i = 0; i < humidity; i++) {
                     _ssd1306_line(&dev, i+offset,22, i+offset, 64-8, false);
                 }
@@ -110,18 +122,17 @@ void app_main() {
                 vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
             }
         } else {
+            ssd1306_bitmaps(&dev, 0, 0, thermometer, 128, 64, true);
             for (int i = 0; i < 6; i++) {
                 sht3x_read_data(&temperature, &humidity);
 
                 char temperatureString[20] = {0,};
 
-                // Convert float to string with two decimal places
                 sprintf(temperatureString, "%.2f C", temperature);
 
-                ssd1306_bitmaps(&dev, 0, 0, thermometer, 128, 64, true);
                 ssd1306_display_text(&dev, 3, temperatureString, 10, false);
                 
-                vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 0.5 second
+                vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 1 second
             }
         }
         mode = !mode;
