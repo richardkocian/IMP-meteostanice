@@ -201,6 +201,10 @@ void sht3x_read_data(float *temperature, float *humidity) {
     *humidity = 100.0 * (float) raw_humidity / 65535.0;
 }
 
+void get_temperature() {
+    
+}
+
 
 
 void app_main() {
@@ -224,19 +228,9 @@ void app_main() {
             for (int i = 0; i < 6; i++) {
                 sht3x_read_data(&temperature, &humidity);
 
-                char temperatureString[7];
                 char humidityString[20];
 
-                // Convert float to string with two decimal places
-                sprintf(temperatureString, "%.2f C", temperature);
-
-                sprintf(humidityString, "%.2f %% humidity", humidity);
-
-                printf(temperatureString);
-                printf(" : ");
-                printf(humidityString);
-                printf("\n");
-
+                sprintf(humidityString, "%.2f%% humidity", humidity);
                 
                 ssd1306_bitmaps(&dev, 0, 0, rectangle, 128, 64, true);
                 ssd1306_display_text(&dev, 0, humidityString, 20, false);
@@ -253,17 +247,9 @@ void app_main() {
                 sht3x_read_data(&temperature, &humidity);
 
                 char temperatureString[7];
-                char humidityString[20];
 
                 // Convert float to string with two decimal places
                 sprintf(temperatureString, "%.2f C", temperature);
-
-                sprintf(humidityString, "%.2f %% humidity", humidity);
-
-                printf(temperatureString);
-                printf(" : ");
-                printf(humidityString);
-                printf("\n");
 
                 ssd1306_bitmaps(&dev, 0, 0, thermometer, 128, 64, true);
                 ssd1306_display_text(&dev, 3, temperatureString, 7, false);
@@ -271,8 +257,6 @@ void app_main() {
                 vTaskDelay(1000 / portTICK_PERIOD_MS); // Pause for 0.5 second
             }
         }
-
-        ssd1306_clear_screen(&dev, false);
         mode = !mode;
     }
 }
